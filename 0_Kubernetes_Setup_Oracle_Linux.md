@@ -58,6 +58,12 @@ sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 sudo setenforce 0
 sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
 ```
+In case of problem with firewall disable with following commands:
+```bash
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+sudo systemctl status firewalld
+```
 On the master node, allow following ports in the firewall.
 ```bash
 $ sudo firewall-cmd --permanent --add-port={6443,2379,2380,10250,10251,10252,10257,10259,179}/tcp
