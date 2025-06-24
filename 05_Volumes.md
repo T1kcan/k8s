@@ -168,15 +168,7 @@ apt -y install nfs-common
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
 
 # Install NFS Provisioner
-helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
-
-    --set nfs.server=xxx.xxx.gov.tr \
-
-    --set nfs.path=/xfs/SYS \
-
-    --set storageClass.defaultClass=true \
-
-    -n nfs
+helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=10.99.0.103 --set nfs.path=/nfs --set storageClass.defaultClass=true -n nfs --create-namespace
 
 # Check whether NFS is mounted as FS:
 df- h
