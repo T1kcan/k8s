@@ -2,7 +2,7 @@
 NFS Server Installation on CentOS
 --------------
 ```bash
-yum install nfs-
+yum install nfs-utils
 ```
 --------------
 Create Serving Directory:
