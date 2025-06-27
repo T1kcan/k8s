@@ -66,36 +66,36 @@ sudo systemctl status firewalld
 ```
 On the master node, allow following ports in the firewall.
 ```bash
-$ sudo firewall-cmd --permanent --add-port={6443,2379,2380,10250,10251,10252,10257,10259,179}/tcp
+sudo firewall-cmd --permanent --add-port={6443,2379,2380,10250,10251,10252,10257,10259,179}/tcp
 $ sudo firewall-cmd --permanent --add-port=4789/udp
 $ sudo firewall-cmd --reload
 ```
 On the Worker Nodes, allow beneath ports in the firewall,
 
 ```bash
-$ sudo firewall-cmd --permanent --add-port={179,10250,30000-32767}/tcp
-$ sudo firewall-cmd --permanent --add-port=4789/udp
-$ sudo firewall-cmd --reload
+sudo firewall-cmd --permanent --add-port={179,10250,30000-32767}/tcp
+sudo firewall-cmd --permanent --add-port=4789/udp
+sudo firewall-cmd --reload
 ```
 ## Step 4: Add Kernel Modules and Parameters
 
 For kuberetes cluster, we must add the overlay and br_netfilter kernel modules on all the nodes.
 Create a file and add following content to it,
 ```bash
-$ sudo tee /etc/modules-load.d/containerd.conf <<EOF
+sudo tee /etc/modules-load.d/containerd.conf <<EOF
 overlay
 br_netfilter
 EOF
 ```
 In order to load above modules, run
 ```bash
-$ sudo modprobe overlay
-$ sudo modprobe br_netfilter
+sudo modprobe overlay
+sudo modprobe br_netfilter
 ```
 Next, add the following kernel parameters, create a file and with following content,
 
 ```bash
-$ sudo vi /etc/sysctl.d/k8s.conf
+sudo vi /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
@@ -103,38 +103,38 @@ net.bridge.bridge-nf-call-ip6tables = 1
 Save & close the file.
 Now add these parameters by running below command
 ```bash
-$ sudo sysctl --system
+sudo sysctl --system
 ```
 ## Step 5: Install Conatinerd Runtime
 Kubernetes requires a container runtime, and one of the most popular choices is containerd. But It is not available in the default package repositories of Rocky Linux or AlmaLinux, so add the following docker repo on all the nodes.
 
 ```bash
-$ sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 ```
 Now, run following dnf command to install containerd on all the nodes.
 ```bash
-$ sudo dnf install containerd.io -y
+sudo dnf install containerd.io -y
 ```
 Configure containerd so that it will use systemdcgroup, execute the following commands on each node.
 
 ```bash
-$ containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
-$ sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 ```
 Restart and enable containerd service using beneath commands,
 ```bash
-$ sudo systemctl restart containerd
-$ sudo systemctl enable containerd
+sudo systemctl restart containerd
+sudo systemctl enable containerd
 ```
 Verify conatinerd service status, run
 ```bash
-$ sudo systemctl status containerd
+sudo systemctl status containerd
 ```
 `
 ## Step 6: Install Kubernetes Tools
 Kubernetes tools like Kubeadm, kubectl and kubelet are not available in the default package repositories of Rocky Linux 9 or AlmaLinux 9. So, to install these tools, add the following repository on all the nodes.
 ```bash
-$ cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
 baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
@@ -147,11 +147,11 @@ EOF
 Note: At time of writing this post, Kubernetes 1.28 version was available, that’s why I have mentioned v1.28 while adding the repo.
 Next, install Kubernetes tools by running following dnf command,
 ```bash
-$ sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 ```
 After installing Kubernetes tools, start the kubelet service on each node.
 ```bash
-$ sudo systemctl enable --now kubelet
+sudo systemctl enable --now kubelet
 ```
 
 ## Step 7: Install Kubernetes Cluster on Oracle Linux / Rocky Linux 9 / Alma Linux 9
@@ -159,7 +159,7 @@ $ sudo systemctl enable --now kubelet
 Now, we are all set to install Kubernetes cluster. Run beneath Kubeadm command to initialize the Kubernetes cluster from the master node.
 
 ```bash
-$ sudo kubeadm init --control-plane-endpoint=k8s-master01
+sudo kubeadm init --control-plane-endpoint=k8s-master01
 ```
 ![print join command](print_join_command.png)
 
@@ -167,19 +167,19 @@ From the output above make a note of the command which will be executed on the w
 
 To start interacting with Kubernetes cluster, run the following commands on the master node.
 ```bash
-$ mkdir -p $HOME/.kube
-$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 Next, join the worker nodes to the cluster, run following Kubeadm command from the worker nodes.
 ```bash
-$ kubeadm join k8s-master01:6443 --token 69s57o.3muk7ey0j0zknw69 \
+kubeadm join k8s-master01:6443 --token 69s57o.3muk7ey0j0zknw69 \
   --discovery-token-ca-cert-hash sha256:8000dff8e803e2bf687f3dae80b4bc1376e5bd770e7a752a3c9fa314de6449fe
 ```
 ![Output from Worker](output_from_worker.png)
 Now, head back to master node and run kubectl command to verify the nodes status.
 ```bash
-$ kubectl get nodes
+kubectl get nodes
 ```
 Output above shows that nodes is “NoteRead”, so to make the nodes status “Ready”, install Calico network addon or plugin in the next step.
 
@@ -187,30 +187,30 @@ Output above shows that nodes is “NoteRead”, so to make the nodes status “
 Calico network addon is required on Kubernetes cluster to enable communication between pods, to make DNS service function with the cluster and to make the nodes status as Ready.
 In order to install calico CNI (Container Network Interface) addon, run following kubectl commands from the master node only.
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
 ```
 Verify calico pods status,
 ```bash
-$ kubectl get pods -n kube-system
+kubectl get pods -n kube-system
 ```
 Next, verify the nodes status, this time nodes status should be in Ready State.
 ```bash
-$ kubectl get nodes
+kubectl get nodes
 ```
 Perfect, output above confirms nodes are in Ready state and can handle workload. Let’s test our Kubernetes installation the next step.
 
 ## Step 9: Test Kubernetes Cluster Installation
 To test Kubernetes cluster installation, let’s try to deploy nginx based application using deployment. Run following kubectl commands,
 ```bash
-$ kubectl create deployment web-app01 --image nginx --replicas 2
-$ kubectl expose deployment web-app01 --type NodePort --port 80
-$ kubectl get deployment web-app01
-$ kubectl get pods
-$ kubectl get svc web-app01
+kubectl create deployment web-app01 --image nginx --replicas 2
+kubectl expose deployment web-app01 --type NodePort --port 80
+kubectl get deployment web-app01
+kubectl get pods
+kubectl get svc web-app01
 ```
 Try to access the application using nodeport “31121”, run following curl command,
 ```bash
-$ curl k8s-worker01:31121
+curl k8s-worker01:31121
 ```
 Great, above confirms that we can access our application web page. This also confirms that our Kubernetes cluster has been installed successfully.
 
