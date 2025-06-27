@@ -174,6 +174,31 @@ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs
 df- h
 xxx.xxx.gov.tr:/xfs/XFS 100T /DATA
 ```
+## Test NFS-Client & Storage Class
+- test-pod.yaml
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-pvc1
+# This pod uses a PersistentVolumeClaim to access storage
+spec:
+  containers:
+    - name: mycontainer
+      image: busybox
+      command: ["sh", "-c", "echo Hello from storage > /data/hello.txt && sleep 3600"]
+      volumeMounts:
+        - mountPath: "/data"
+          name: hostpath-storage
+  volumes:
+    - name: hostpath-storage
+      persistentVolumeClaim:
+        claimName: hostpath-pvc
+  restartPolicy: Never
+```
+```bash
+kubectl apply -f test-pod.yaml
+```
 ```bash
 $ kubectl apply -f pv-hostpath.yaml 
 #persistentvolume/hostpath-pv created
